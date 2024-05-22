@@ -39,23 +39,54 @@ const login = (req, res) => {
             });
 
             res.cookie('token', token, {
-                httpOnly : true
+                httpOnly: true
             });
             console.log(token);
 
             return res.status(StatusCodes.OK).json(results);
-        }else {
+        } else {
             return res.status(StatusCodes.UNAUTHORIZED);
         }
     });
 }
 
 const passwordResetRequest = (req, res) => {
-    res.json('비밀번호 초기화 요청');
+    const { email } = req.body;
+
+    let sql = 'select * from users where email = ?';
+    conn.query(sql, email, (err, results) => {
+        if (err) {
+            console.log(err);
+            return res.status(StatusCodes.BAD_REQUEST).end();
+        }
+        const user = results[0];
+        if (user) {
+            return res.status(StatusCodes.OK).json({
+                email: email
+            });
+        } else {
+            return res.status(StatusCodes.UNAUTHORIZED).end();
+        }
+    });
 }
 
 const passwordReset = (req, res) => {
-    res.json('비밀번호 초기화');
+    const { email, password } = req.body;
+
+
+    let sql = 'update users set password = ? where email = ?';
+    let values = [password, email];
+    conn.query(sql, values, (err, results) => {
+        if (err) {
+            console.log(err);
+            return res.status(StatusCodes.BAD_REQUEST).end();
+        }
+        if (results.affectedRows == 0) {
+            return res.status(StatusCodes.BAD_REQUEST).end();
+        } else {
+            return res.status(StatusCodes.OK).json(results);
+        }
+    });
 }
 
 module.exports = {
