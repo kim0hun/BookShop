@@ -20,7 +20,7 @@ const join = (req, res) => {
         }
         return res.status(StatusCodes.CREATED).json(results);
     });
-}
+};
 
 const login = (req, res) => {
     const { email, password } = req.body;
@@ -54,7 +54,7 @@ const login = (req, res) => {
             return res.status(StatusCodes.UNAUTHORIZED);
         }
     });
-}
+};
 
 const passwordResetRequest = (req, res) => {
     const { email } = req.body;
@@ -74,7 +74,7 @@ const passwordResetRequest = (req, res) => {
             return res.status(StatusCodes.UNAUTHORIZED).end();
         }
     });
-}
+};
 
 const passwordReset = (req, res) => {
     const { email, password } = req.body;
@@ -95,7 +95,7 @@ const passwordReset = (req, res) => {
             return res.status(StatusCodes.OK).json(results);
         }
     });
-}
+};
 
 module.exports = {
     join,
