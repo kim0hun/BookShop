@@ -34,7 +34,7 @@ const allBooks = (req, res) => {
 const bookDetail = (req, res) => {
     let { id } = req.params;
 
-    let sql = 'select * from books where id = ?';
+    let sql = 'select * from books left join category on books.category_id = category.id where category.id = ?';
     conn.query(sql, id, (err, results) => {
         if (err) {
             console.log(err);
