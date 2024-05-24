@@ -6,19 +6,21 @@ const allBooks = (req, res) => {
 
     let offset = limit * (currentPage - 1);
 
-    let sql = 'select * from books limit ? offset ?';
-    let values = [parseInt(limit), offset];
+    let sql = 'select * from books';
+    let values = [];
 
     if (category_id && news) {
         sql += ' where category_id=? and pub_date between date_sub(now(), interval 1 month) and now()';
-        values.push(category_id, news);
+        values = [category_id];
     } else if (category_id) {
         sql += ' where category_id=?';
-        values.push(category_id);
+        values = [category_id];
     } else if (news) {
         sql += ' where pub_date between date_sub(now(), interval 1 month) and now()';
-        values.push(news);
     }
+
+    sql += ' limit ? offset ?';
+    values.push(parseInt(limit), offset);
 
     conn.query(sql, values, (err, results) => {
         if (err) {
