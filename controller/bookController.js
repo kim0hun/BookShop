@@ -2,33 +2,37 @@ const conn = require('../mariadb');
 const { StatusCodes } = require('http-status-codes');
 
 const allBooks = (req, res) => {
-    let {category_id} = req.query;
+    let { category_id, news, limit, currentPage } = req.query;
 
-    if(category_id){
-        let sql = 'select * from books where category_id = ?';
-        conn.query(sql, category_id, (err, results)=>{
-            if(err){
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).end();
-            }
-    
-            if(results.length){
-                return res.status(StatusCodes.OK).json(results);
-            }else{
-                return res.status(StatusCodes.NOT_FOUND).end();
-            }
-        });
-    }else{
-        const sql = 'select * from books';
-        conn.query(sql, (err, results) => {
-            if (err) {
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).end();
-            }
-    
-            return res.status(StatusCodes.OK).json(results);
-        });
+    let offset = limit * (currentPage - 1);
+
+    let sql = 'select * from books limit ? offset ?';
+    let values = [parseInt(limit), offset];
+
+    if (category_id && news) {
+        sql += ' where category_id=? and pub_date between date_sub(now(), interval 1 month) and now()';
+        values.push(category_id, news);
+    } else if (category_id) {
+        sql += ' where category_id=?';
+        values.push(category_id);
+    } else if (news) {
+        sql += ' where pub_date between date_sub(now(), interval 1 month) and now()';
+        values.push(news);
     }
+
+    conn.query(sql, values, (err, results) => {
+        if (err) {
+            console.log(err);
+            return res.status(StatusCodes.BAD_REQUEST).end();
+        }
+
+        if (results.length) {
+            return res.status(StatusCodes.OK).json(results);
+        } else {
+            return res.status(StatusCodes.NOT_FOUND).end();
+        }
+    });
+
 };
 
 const bookDetail = (req, res) => {
