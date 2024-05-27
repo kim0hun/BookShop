@@ -47,9 +47,9 @@ const bookDetail = (req, res) => {
     (select exists (select * from likes where user_id = ? and liked_book_id = ?)) as liked 
     from books 
     left join category
-    on books.category_id = category.id
+    on books.category_id = category.category_id
     where books.id = ?;`;
-    let values = [user_id, id, id]
+    let values = [user_id, id, id];
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
