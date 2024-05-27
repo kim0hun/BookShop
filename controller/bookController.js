@@ -38,10 +38,19 @@ const allBooks = (req, res) => {
 };
 
 const bookDetail = (req, res) => {
+    let {user_id} = req.body;
     let { id } = req.params;
 
-    let sql = 'select * from books left join category on books.category_id = category.id where category.id = ?';
-    conn.query(sql, id, (err, results) => {
+    let sql = 
+    `select *,
+    (select count(*) from likes where liked_book_id=books.id) as likes,
+    (select exists (select * from likes where user_id = ? and liked_book_id = ?)) as liked 
+    from books 
+    left join category
+    on books.category_id = category.id
+    where books.id = ?;`;
+    let values = [user_id, id, id]
+    conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
             return res.status(StatusCodes.BAD_REQUEST).end();
