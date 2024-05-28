@@ -18,13 +18,14 @@ const addToCart = (req, res) =>{
 };
 
 const getCartItems = (req, res) =>{
-    const {user_id} = req.body;
+    const {user_id, selected} = req.body;
     
     let sql = `select cartItems.id, book_id, title, summary, quantity, price
      from cartItems left join books
      on cartItems.book_id = books.id
-     where user_id = ?`;
-    conn.query(sql, user_id, (err, results) => {
+     where user_id = ? and cartItems.id in (?)`;
+    let values = [user_id, selected];
+    conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
             res.status(StatusCodes.BAD_REQUEST).end();
