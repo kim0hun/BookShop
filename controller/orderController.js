@@ -2,7 +2,38 @@ const conn = require('../mariadb');
 const {StatusCodes} = require('http-status-codes');
 
 const order = (req, res) => {
-    res.json('주문 하기');
+
+    const {items, delivery, totalQuantity, totalPrice, userId, firstBookTitle} = req.body;
+    let delivery_id = 3;
+    let order_id;
+
+    let sql = 'insert into delivery (address, receiver, contact) values (?, ?, ?)';
+    let values = [delivery.address, delivery.receiver, delivery.contact];
+    // conn.query(sql, values, (err, results) => {
+    //     if (err) {
+    //         console.log(err);
+    //         res.status(StatusCodes.BAD_REQUEST).end();
+    //     }
+
+    //     delivery_id = results.insertId;
+        
+    //     return res.status(StatusCodes.OK).json(results);
+    // });
+
+    sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
+    values (?, ?, ?, ?, ?)`;
+    values = [firstBookTitle, totalQuantity, totalPrice, userId, delivery_id];
+    conn.query(sql, values, (err, results) => {
+        if (err) {
+            console.log(err);
+            res.status(StatusCodes.BAD_REQUEST).end();
+        }
+
+        order_id = results.insertId;
+        console.log(order_id);
+        
+        return res.status(StatusCodes.OK).json(results);
+    });
 };
 
 const getOrders = (req, res) => {
