@@ -1,54 +1,52 @@
-const conn = require('../mariadb');
+// const conn = require('../mariadb');
+const mariadb = require('mysql2/promise');
 const {StatusCodes} = require('http-status-codes');
 
-const order = (req, res) => {
+const order = async (req, res) => {
+    const conn = await mariadb.createConnection({
+        host: '127.0.0.1',
+        user: 'root',
+        password: 'root',
+        database: 'Bookshop',
+        dataString: true
+    });
 
     const {items, delivery, totalQuantity, totalPrice, userId, firstBookTitle} = req.body;
-    let delivery_id = 3;
-    let order_id = 2;
+    let delivery_id;
+    let order_id;
 
     let sql = 'insert into delivery (address, receiver, contact) values (?, ?, ?)';
     let values = [delivery.address, delivery.receiver, delivery.contact];
+    
+    let [results] = await conn.query(sql, values);
+
+    console.log(results);
+
+    // sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
+    // values (?, ?, ?, ?, ?)`;
+    // values = [firstBookTitle, totalQuantity, totalPrice, userId, delivery_id];
     // conn.query(sql, values, (err, results) => {
     //     if (err) {
     //         console.log(err);
-    //         res.status(StatusCodes.BAD_REQUEST).end();
-    //     }
-
-    //     delivery_id = results.insertId;
-        
-    //     return res.status(StatusCodes.OK).json(results);
-    // });
-
-    sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
-    values (?, ?, ?, ?, ?)`;
-    values = [firstBookTitle, totalQuantity, totalPrice, userId, delivery_id];
-    // conn.query(sql, values, (err, results) => {
-    //     if (err) {
-    //         console.log(err);
-    //         res.status(StatusCodes.BAD_REQUEST).end();
+    //         return res.status(StatusCodes.BAD_REQUEST).end();
     //     }
 
     //     order_id = results.insertId;
-    //     console.log(order_id);
-        
-    //     return res.status(StatusCodes.OK).json(results);
     // });
 
-    sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
-    values = [];
-    items.forEach((item) => {
-        values.push([order_id, item.book_id, item.quantity]);
+    // sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
+    // values = [];
+    // items.forEach((item) => {
+    //     values.push([order_id, item.book_id, item.quantity]);
+    // });
+    // conn.query(sql, [values], (err, results) => {
+    //     if (err) {
+    //         console.log(err);
+    //         return res.status(StatusCodes.BAD_REQUEST).end();
+    //     }
 
-    });
-    conn.query(sql, [values], (err, results) => {
-        if (err) {
-            console.log(err);
-            res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        
-        return res.status(StatusCodes.OK).json(results);
-    });
+    //     return res.status(StatusCodes.OK).json(results);
+    // });
 };
 
 const getOrders = (req, res) => {

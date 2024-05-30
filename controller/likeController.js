@@ -11,7 +11,7 @@ const addLike = (req, res) => {
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
-            res.status(StatusCodes.BAD_REQUEST).end();
+            return res.status(StatusCodes.BAD_REQUEST).end();
         }
 
         return res.status(StatusCodes.OK).json(results);
@@ -28,7 +28,7 @@ const removeLike = (req, res) => {
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
-            res.status(StatusCodes.BAD_REQUEST).end();
+            return res.status(StatusCodes.BAD_REQUEST).end();
         }
 
         return res.status(StatusCodes.OK).json(results);

@@ -10,7 +10,7 @@ const addToCart = (req, res) =>{
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
-            res.status(StatusCodes.BAD_REQUEST).end();
+            return res.status(StatusCodes.BAD_REQUEST).end();
         }
 
         return res.status(StatusCodes.OK).json(results);
@@ -28,7 +28,7 @@ const getCartItems = (req, res) =>{
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
-            res.status(StatusCodes.BAD_REQUEST).end();
+            return res.status(StatusCodes.BAD_REQUEST).end();
         }
 
         return res.status(StatusCodes.OK).json(results);
@@ -42,7 +42,7 @@ const removeCartItem = (req, res) =>{
     conn.query(sql, id, (err, results) => {
         if (err) {
             console.log(err);
-            res.status(StatusCodes.BAD_REQUEST).end();
+            return res.status(StatusCodes.BAD_REQUEST).end();
         }
 
         return res.status(StatusCodes.OK).json(results);
