@@ -12,41 +12,29 @@ const order = async (req, res) => {
     });
 
     const {items, delivery, totalQuantity, totalPrice, userId, firstBookTitle} = req.body;
-    let delivery_id;
-    let order_id;
 
     let sql = 'insert into delivery (address, receiver, contact) values (?, ?, ?)';
     let values = [delivery.address, delivery.receiver, delivery.contact];
     
-    let [results] = await conn.query(sql, values);
+    let [results] = await conn.execute(sql, values);
 
-    console.log(results);
+    let delivery_id = results.insertId;
 
-    // sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
-    // values (?, ?, ?, ?, ?)`;
-    // values = [firstBookTitle, totalQuantity, totalPrice, userId, delivery_id];
-    // conn.query(sql, values, (err, results) => {
-    //     if (err) {
-    //         console.log(err);
-    //         return res.status(StatusCodes.BAD_REQUEST).end();
-    //     }
+    sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
+    values (?, ?, ?, ?, ?)`;
+    values = [firstBookTitle, totalQuantity, totalPrice, userId, delivery_id];
+    [results] = await conn.execute(sql, values);
 
-    //     order_id = results.insertId;
-    // });
+    let order_id = results.insertId;
 
-    // sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
-    // values = [];
-    // items.forEach((item) => {
-    //     values.push([order_id, item.book_id, item.quantity]);
-    // });
-    // conn.query(sql, [values], (err, results) => {
-    //     if (err) {
-    //         console.log(err);
-    //         return res.status(StatusCodes.BAD_REQUEST).end();
-    //     }
+    sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
+    values = [];
+    items.forEach((item) => {
+        values.push([order_id, item.book_id, item.quantity]);
+    });
+    [results] = await conn.query(sql, [values]);
 
-    //     return res.status(StatusCodes.OK).json(results);
-    // });
+    return res.status(StatusCodes.OK).json(results);
 };
 
 const getOrders = (req, res) => {
