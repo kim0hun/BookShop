@@ -1,6 +1,6 @@
 // const conn = require('../mariadb');
 const mariadb = require('mysql2/promise');
-const {StatusCodes} = require('http-status-codes');
+const { StatusCodes } = require('http-status-codes');
 
 const order = async (req, res) => {
     const conn = await mariadb.createConnection({
@@ -11,11 +11,11 @@ const order = async (req, res) => {
         dataString: true
     });
 
-    const {items, delivery, totalQuantity, totalPrice, userId, firstBookTitle} = req.body;
+    const { items, delivery, totalQuantity, totalPrice, userId, firstBookTitle } = req.body;
 
     let sql = 'insert into delivery (address, receiver, contact) values (?, ?, ?)';
     let values = [delivery.address, delivery.receiver, delivery.contact];
-    
+
     let [results] = await conn.execute(sql, values);
 
     let delivery_id = results.insertId;
@@ -45,13 +45,26 @@ const order = async (req, res) => {
 
 const deleteCartItems = async (conn, items) => {
     let sql = 'delete from cartItems where id in (?)';
-    
+
     let [results] = await conn.query(sql, [items]);
     return results;
 }
 
-const getOrders = (req, res) => {
-    res.json('주문 목록 조회');
+const getOrders = async (req, res) => {
+    const conn = await mariadb.createConnection({
+        host: '127.0.0.1',
+        user: 'root',
+        password: 'root',
+        database: 'Bookshop',
+        dataString: true
+    });
+
+    let sql = `select orders.id, created_at, address, receiver, contact, book_title, total_quantity, total_price
+               from orders left join delivery
+               on orders.delivery_id = delivery.id`;
+    let [rows, fields] = await conn.query(sql);
+
+    return res.status(StatusCodes.OK).json(rows);
 };
 
 const getOrderDetail = (req, res) => {
