@@ -1,10 +1,11 @@
 const conn = require('../mariadb');
-const {StatusCodes} = require('http-status-codes');
-const {ensureAuthorization} = require('./likeController');
+const { StatusCodes } = require('http-status-codes');
+const { ensureAuthorization } = require('./likeController');
+const jwt = require('jsonwebtoken');
 
-const addToCart = (req, res) =>{
-    
-    const {book_id, quantity} = req.body;
+const addToCart = (req, res) => {
+
+    const { book_id, quantity } = req.body;
 
     let authorization = ensureAuthorization(req, res);
 
@@ -20,27 +21,33 @@ const addToCart = (req, res) =>{
     });
 };
 
-const getCartItems = (req, res) =>{
-    const {selected} = req.body;
-    
+const getCartItems = (req, res) => {
+    const { selected } = req.body;
+
     let authorization = ensureAuthorization(req, res);
 
-    let sql = `select cartItems.id, book_id, title, summary, quantity, price
+    if (authorization instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    } else {
+        let sql = `select cartItems.id, book_id, title, summary, quantity, price
      from cartItems left join books
      on cartItems.book_id = books.id
      where user_id = ? and cartItems.id in (?)`;
-    let values = [authorization.id, selected];
-    conn.query(sql, values, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
+        let values = [authorization.id, selected];
+        conn.query(sql, values, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            }
 
-        return res.status(StatusCodes.OK).json(results);
-    });
+            return res.status(StatusCodes.OK).json(results);
+        });
+    }
 };
 
-const removeCartItem = (req, res) =>{
+const removeCartItem = (req, res) => {
     const cartItemId = req.params.id;
 
     let sql = 'delete from cartItems where id = ?';

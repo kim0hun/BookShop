@@ -28,16 +28,22 @@ const removeLike = (req, res) => {
 
     let authorization = ensureAuthorization(req, res);
 
-    let sql = 'DELETE FROM likes WHERE user_id = ? AND liked_book_id = ?';
-    let values = [authorization.id, book_id];
-    conn.query(sql, values, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
+    if (authorization instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    } else {
+        let sql = 'DELETE FROM likes WHERE user_id = ? AND liked_book_id = ?';
+        let values = [authorization.id, book_id];
+        conn.query(sql, values, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            }
 
-        return res.status(StatusCodes.OK).json(results);
-    });
+            return res.status(StatusCodes.OK).json(results);
+        });
+    }
 };
 
 function ensureAuthorization(req, res) {
@@ -50,12 +56,10 @@ function ensureAuthorization(req, res) {
 
         return decodedJwt;
     } catch (err) {
-        console.log(err.name);
-        console.log(err.message);
+        console.log('err.name : ', err.name);
+        console.log('err.message : ', err.message);
 
-        return res.status(StatusCodes.UNAUTHORIZED).json({
-            'message': '로그인 세션이 만료되었습니다. 다시 로그인 하세요.'
-        });
+        return err;
     }
 }
 
