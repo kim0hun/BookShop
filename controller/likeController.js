@@ -42,7 +42,7 @@ const removeLike = (req, res) => {
 
 function ensureAuthorization(req){
     let receivedJwt = req.headers['authorization'];
-    console.log('received jwt : ', receivedJwt);
+    // console.log('received jwt : ', receivedJwt);
 
     let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY);
     console.log(decodedJwt);
@@ -52,5 +52,6 @@ function ensureAuthorization(req){
 
 module.exports = {
     addLike,
-    removeLike
+    removeLike,
+    ensureAuthorization
 };
