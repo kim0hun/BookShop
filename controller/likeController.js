@@ -6,16 +6,12 @@ dotenv.config();
 
 const addLike = (req, res) => {
 
-    const { id } = req.params;
+    const book_id = req.params.id;
 
-    let receivedJwt = req.headers['authorization'];
-    console.log('received jwt : ', receivedJwt);
-
-    let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY);
-    console.log(decodedJwt);
+    let authorization = ensureAuthorization(req);
 
     let sql = 'insert into likes (user_id, liked_book_id) values (?, ?)';
-    let values = [decodedJwt.id, id];
+    let values = [authorization.id, book_id];
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
@@ -28,11 +24,12 @@ const addLike = (req, res) => {
 
 const removeLike = (req, res) => {
 
-    const { id } = req.params;
-    const { user_id } = req.body;
+    const book_id = req.params.id;
+    
+    let authorization = ensureAuthorization(req);
 
     let sql = 'DELETE FROM likes WHERE user_id = ? AND liked_book_id = ?';
-    let values = [user_id, id];
+    let values = [authorization.id, book_id];
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
@@ -42,6 +39,16 @@ const removeLike = (req, res) => {
         return res.status(StatusCodes.OK).json(results);
     });
 };
+
+function ensureAuthorization(req){
+    let receivedJwt = req.headers['authorization'];
+    console.log('received jwt : ', receivedJwt);
+
+    let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY);
+    console.log(decodedJwt);
+
+    return decodedJwt;
+}
 
 module.exports = {
     addLike,
