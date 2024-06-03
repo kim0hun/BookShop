@@ -8,7 +8,7 @@ const addLike = (req, res) => {
 
     const book_id = req.params.id;
 
-    let authorization = ensureAuthorization(req);
+    let authorization = ensureAuthorization(req, res);
 
     let sql = 'insert into likes (user_id, liked_book_id) values (?, ?)';
     let values = [authorization.id, book_id];
@@ -25,8 +25,8 @@ const addLike = (req, res) => {
 const removeLike = (req, res) => {
 
     const book_id = req.params.id;
-    
-    let authorization = ensureAuthorization(req);
+
+    let authorization = ensureAuthorization(req, res);
 
     let sql = 'DELETE FROM likes WHERE user_id = ? AND liked_book_id = ?';
     let values = [authorization.id, book_id];
@@ -40,14 +40,23 @@ const removeLike = (req, res) => {
     });
 };
 
-function ensureAuthorization(req){
-    let receivedJwt = req.headers['authorization'];
-    // console.log('received jwt : ', receivedJwt);
+function ensureAuthorization(req, res) {
+    try {
+        let receivedJwt = req.headers['authorization'];
+        // console.log('received jwt : ', receivedJwt);
 
-    let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY);
-    console.log(decodedJwt);
+        let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY);
+        console.log(decodedJwt);
 
-    return decodedJwt;
+        return decodedJwt;
+    } catch (err) {
+        console.log(err.name);
+        console.log(err.message);
+
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인 하세요.'
+        });
+    }
 }
 
 module.exports = {

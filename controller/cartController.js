@@ -6,7 +6,7 @@ const addToCart = (req, res) =>{
     
     const {book_id, quantity} = req.body;
 
-    let authorization = ensureAuthorization(req);
+    let authorization = ensureAuthorization(req, res);
 
     let sql = 'insert into cartItems (book_id, quantity, user_id) values (?, ?, ?)';
     let values = [book_id, quantity, authorization.id];
@@ -23,7 +23,7 @@ const addToCart = (req, res) =>{
 const getCartItems = (req, res) =>{
     const {selected} = req.body;
     
-    let authorization = ensureAuthorization(req);
+    let authorization = ensureAuthorization(req, res);
 
     let sql = `select cartItems.id, book_id, title, summary, quantity, price
      from cartItems left join books
