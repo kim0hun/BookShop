@@ -8,7 +8,7 @@ const allBooks = (req, res) => {
 
     let offset = limit * (currentPage - 1);
 
-    let sql = 'select *, (select count(*) from likes where liked_book_id = books.id) as likes from books';
+    let sql = 'select sql_calc_found_rows *, (select count(*) from likes where liked_book_id = books.id) as likes from books';
     let values = [];
 
     if (category_id && news) {
@@ -27,14 +27,26 @@ const allBooks = (req, res) => {
     conn.query(sql, values, (err, results) => {
         if (err) {
             console.log(err);
+            // return res.status(StatusCodes.BAD_REQUEST).end();
+        }
+        console.log(results);
+
+        // if (results.length) {
+        //     return res.status(StatusCodes.OK).json(results);
+        // } else {
+        //     return res.status(StatusCodes.NOT_FOUND).end();
+        // }
+    });
+
+    sql = 'select found_rows()';
+
+    conn.query(sql, (err, results) => {
+        if (err) {
+            console.log(err);
             return res.status(StatusCodes.BAD_REQUEST).end();
         }
 
-        if (results.length) {
-            return res.status(StatusCodes.OK).json(results);
-        } else {
-            return res.status(StatusCodes.NOT_FOUND).end();
-        }
+        return res.status(StatusCodes.OK).json(results);
     });
 
 };
@@ -54,7 +66,7 @@ const bookDetail = (req, res) => {
         return res.status(StatusCodes.BAD_REQUEST).json({
             'message': '잘못된 토큰입니다.'
         });
-    } else if(authorization instanceof ReferenceError){
+    } else if (authorization instanceof ReferenceError) {
         let book_id = req.params.id;
 
         let sql =
@@ -78,7 +90,7 @@ const bookDetail = (req, res) => {
             }
         });
 
-    }else {
+    } else {
 
         let book_id = req.params.id;
 
