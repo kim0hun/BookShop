@@ -1,4 +1,5 @@
-// const conn = require('../mariadb');
+const ensureAuthorization = require('../auth');
+const jwt = require('jsonwebtoken');
 const mariadb = require('mysql2/promise');
 const { StatusCodes } = require('http-status-codes');
 
@@ -11,36 +12,49 @@ const order = async (req, res) => {
         dataString: true
     });
 
-    const { items, delivery, totalQuantity, totalPrice, userId, firstBookTitle } = req.body;
+    let authorization = ensureAuthorization(req, res);
 
-    let sql = 'insert into delivery (address, receiver, contact) values (?, ?, ?)';
-    let values = [delivery.address, delivery.receiver, delivery.contact];
+    if (authorization instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    } else if (authorization instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            'message': '잘못된 토큰입니다.'
+        });
+    } else {
 
-    let [results] = await conn.execute(sql, values);
+        const { items, delivery, totalQuantity, totalPrice, firstBookTitle } = req.body;
 
-    let delivery_id = results.insertId;
+        let sql = 'insert into delivery (address, receiver, contact) values (?, ?, ?)';
+        let values = [delivery.address, delivery.receiver, delivery.contact];
 
-    sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
+        let [results] = await conn.execute(sql, values);
+
+        let delivery_id = results.insertId;
+
+        sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
     values (?, ?, ?, ?, ?)`;
-    values = [firstBookTitle, totalQuantity, totalPrice, userId, delivery_id];
-    [results] = await conn.execute(sql, values);
+        values = [firstBookTitle, totalQuantity, totalPrice, authorization.id, delivery_id];
+        [results] = await conn.execute(sql, values);
 
-    let order_id = results.insertId;
+        let order_id = results.insertId;
 
-    sql = 'select book_id, quantity from cartItems where id in (?)';
-    let [orderItems, field] = await conn.query(sql, [items]);
+        sql = 'select book_id, quantity from cartItems where id in (?)';
+        let [orderItems, field] = await conn.query(sql, [items]);
 
-    sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
-    values = [];
-    orderItems.forEach((item) => {
-        values.push([order_id, item.book_id, item.quantity]);
-    });
+        sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
+        values = [];
+        orderItems.forEach((item) => {
+            values.push([order_id, item.book_id, item.quantity]);
+        });
 
-    results = await conn.query(sql, [values]);
+        results = await conn.query(sql, [values]);
 
-    results = await deleteCartItems(conn, items);
+        results = await deleteCartItems(conn, items);
 
-    return res.status(StatusCodes.OK).json(results);
+        return res.status(StatusCodes.OK).json(results);
+    }
 };
 
 const deleteCartItems = async (conn, items) => {
@@ -68,7 +82,7 @@ const getOrders = async (req, res) => {
 };
 
 const getOrderDetail = async (req, res) => {
-    const {id} = req.params;
+    const orderId = req.params.id;
 
     const conn = await mariadb.createConnection({
         host: '127.0.0.1',
