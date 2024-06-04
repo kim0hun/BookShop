@@ -1,3 +1,5 @@
+const ensureAuthorization = require('../auth');
+const jwt = require('jsonwebtoken');
 const conn = require('../mariadb');
 const { StatusCodes } = require('http-status-codes');
 
@@ -38,30 +40,69 @@ const allBooks = (req, res) => {
 };
 
 const bookDetail = (req, res) => {
-    let {user_id} = req.body;
-    let { id } = req.params;
 
-    let sql = 
-    `select *,
-    (select count(*) from likes where liked_book_id=books.id) as likes,
-    (select exists (select * from likes where user_id = ? and liked_book_id = ?)) as liked 
-    from books 
-    left join category
-    on books.category_id = category.category_id
-    where books.id = ?;`;
-    let values = [user_id, id, id];
-    conn.query(sql, values, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
+    // 로그인 상태가 아니면 => liked 빼고 보내주면 되고
+    // 로그인 상태이면 => liked 추가해서
 
-        if (results[0]) {
-            return res.status(StatusCodes.OK).json(results[0]);
-        } else {
-            return res.status(StatusCodes.NOT_FOUND).end();
-        }
-    });
+    let authorization = ensureAuthorization(req, res);
+
+    if (authorization instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    } else if (authorization instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            'message': '잘못된 토큰입니다.'
+        });
+    } else if(authorization instanceof ReferenceError){
+        let book_id = req.params.id;
+
+        let sql =
+            `select *,
+            (select count(*) from likes where liked_book_id=books.id) as likes
+            from books left join category
+            on books.category_id = category.category_id
+            where books.id = ?;`;
+        let values = [book_id];
+
+        conn.query(sql, values, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            }
+
+            if (results[0]) {
+                return res.status(StatusCodes.OK).json(results[0]);
+            } else {
+                return res.status(StatusCodes.NOT_FOUND).end();
+            }
+        });
+
+    }else {
+
+        let book_id = req.params.id;
+
+        let sql =
+            `select *,
+            (select count(*) from likes where liked_book_id=books.id) as likes,
+            (select exists (select * from likes where user_id = ? and liked_book_id = ?)) as liked 
+            from books left join category
+            on books.category_id = category.category_id
+            where books.id = ?;`;
+        let values = [authorization.id, book_id, book_id];
+        conn.query(sql, values, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            }
+
+            if (results[0]) {
+                return res.status(StatusCodes.OK).json(results[0]);
+            } else {
+                return res.status(StatusCodes.NOT_FOUND).end();
+            }
+        });
+    }
 };
 
 module.exports = {
