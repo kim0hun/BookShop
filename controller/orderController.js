@@ -73,33 +73,59 @@ const getOrders = async (req, res) => {
         dataString: true
     });
 
-    let sql = `select orders.id, created_at, address, receiver, contact, book_title, total_quantity, total_price
+    let authorization = ensureAuthorization(req, res);
+
+    if (authorization instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    } else if (authorization instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            'message': '잘못된 토큰입니다.'
+        });
+    } else {
+
+        let sql = `select orders.id, created_at, address, receiver, contact, book_title, total_quantity, total_price
                from orders left join delivery
                on orders.delivery_id = delivery.id`;
-    let [rows, fields] = await conn.query(sql);
+        let [rows, fields] = await conn.query(sql);
 
-    return res.status(StatusCodes.OK).json(rows);
+        return res.status(StatusCodes.OK).json(rows);
+    }
 };
 
 const getOrderDetail = async (req, res) => {
-    const orderId = req.params.id;
 
-    const conn = await mariadb.createConnection({
-        host: '127.0.0.1',
-        user: 'root',
-        password: 'root',
-        database: 'Bookshop',
-        dataString: true
-    });
+    let authorization = ensureAuthorization(req, res);
 
-    let sql = `select book_id, title, author, price, quantity 
+    if (authorization instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    } else if (authorization instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            'message': '잘못된 토큰입니다.'
+        });
+    } else {
+
+        const orderId = req.params.id;
+
+        const conn = await mariadb.createConnection({
+            host: '127.0.0.1',
+            user: 'root',
+            password: 'root',
+            database: 'Bookshop',
+            dataString: true
+        });
+
+        let sql = `select book_id, title, author, price, quantity 
                from orderedBook left join books
                on orderedBook.book_id = books.id
                where order_id = ?`;
-    let [rows, fields] = await conn.query(sql, id);
+        let [rows, fields] = await conn.query(sql, orderId);
 
-    return res.status(StatusCodes.OK).json(rows);
-
+        return res.status(StatusCodes.OK).json(rows);
+    }
 };
 
 module.exports = {
