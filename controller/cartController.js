@@ -48,8 +48,14 @@ const getCartItems = (req, res) => {
         let sql = `select cartItems.id, book_id, title, summary, quantity, price
      from cartItems left join books
      on cartItems.book_id = books.id
-     where user_id = ? and cartItems.id in (?)`;
-        let values = [authorization.id, selected];
+     where user_id = ?`;
+        let values = [authorization.id];
+
+        if(selected){ // 주문서 작성 시 '선택한 장바구니 목록 조회'
+            sql += ' and cartItems.id in (?)';
+            values.push(selected);
+        }
+
         conn.query(sql, values, (err, results) => {
             if (err) {
                 console.log(err);

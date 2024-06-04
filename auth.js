@@ -9,7 +9,7 @@ const ensureAuthorization = (req, res) => {
         // console.log('received jwt : ', receivedJwt);
 
         let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY);
-        console.log(decodedJwt);
+        console.log('decodedJwt : ', decodedJwt);
 
         return decodedJwt;
     } catch (err) {
