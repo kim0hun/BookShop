@@ -1,6 +1,6 @@
+const ensureAuthorization = require('../auth');
 const conn = require('../mariadb');
 const { StatusCodes } = require('http-status-codes');
-const { ensureAuthorization } = require('./likeController');
 const jwt = require('jsonwebtoken');
 
 const addToCart = (req, res) => {
