@@ -31,22 +31,22 @@ const order = async (req, res) => {
 
         let [results] = await conn.execute(sql, values);
 
-        let delivery_id = results.insertId;
+        let deliveryId = results.insertId;
 
-        sql = `insert into orders (book_title, total_quantity, total_price, user_id, delivery_id)
+        sql = `insert into orders (bookTitle, totalQuantity, totalPrice, userId, deliveryId)
     values (?, ?, ?, ?, ?)`;
-        values = [firstBookTitle, totalQuantity, totalPrice, authorization.id, delivery_id];
+        values = [firstBookTitle, totalQuantity, totalPrice, authorization.id, deliveryId];
         [results] = await conn.execute(sql, values);
 
-        let order_id = results.insertId;
+        let orderId = results.insertId;
 
-        sql = 'select book_id, quantity from cartItems where id in (?)';
+        sql = 'select bookId, quantity from cartItems where id in (?)';
         let [orderItems, field] = await conn.query(sql, [items]);
 
-        sql = `insert into orderedBook (order_id, book_id, quantity) values ?`;
+        sql = `insert into orderedBook (orderId, bookId, quantity) values ?`;
         values = [];
         orderItems.forEach((item) => {
-            values.push([order_id, item.book_id, item.quantity]);
+            values.push([orderId, item.bookId, item.quantity]);
         });
 
         results = await conn.query(sql, [values]);
@@ -85,9 +85,9 @@ const getOrders = async (req, res) => {
         });
     } else {
 
-        let sql = `select orders.id, created_at, address, receiver, contact, book_title, total_quantity, total_price
+        let sql = `select orders.id, createdAt, address, receiver, contact, bookTitle, totalQuantity, totalPrice
                from orders left join delivery
-               on orders.delivery_id = delivery.id`;
+               on orders.deliveryId = delivery.id`;
         let [rows, fields] = await conn.query(sql);
 
         return res.status(StatusCodes.OK).json(rows);
@@ -118,10 +118,10 @@ const getOrderDetail = async (req, res) => {
             dataString: true
         });
 
-        let sql = `select book_id, title, author, price, quantity 
+        let sql = `select bookId, title, author, price, quantity 
                from orderedBook left join books
-               on orderedBook.book_id = books.id
-               where order_id = ?`;
+               on orderedBook.bookId = books.id
+               where orderId = ?`;
         let [rows, fields] = await conn.query(sql, orderId);
 
         return res.status(StatusCodes.OK).json(rows);

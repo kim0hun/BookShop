@@ -5,21 +5,21 @@ const { StatusCodes } = require('http-status-codes');
 
 const allBooks = (req, res) => {
     let allBooksRes = {};
-    let { category_id, news, limit, currentPage } = req.query;
+    let { categoryId, news, limit, currentPage } = req.query;
 
     let offset = limit * (currentPage - 1);
 
-    let sql = 'select sql_calc_found_rows *, (select count(*) from likes where liked_book_id = books.id) as likes from books';
+    let sql = 'select sql_calc_found_rows *, (select count(*) from likes where likedBookId = books.id) as likes from books';
     let values = [];
 
-    if (category_id && news) {
-        sql += ' where category_id=? and pub_date between date_sub(now(), interval 1 month) and now()';
-        values = [category_id];
-    } else if (category_id) {
-        sql += ' where category_id=?';
-        values = [category_id];
+    if (categoryId && news) {
+        sql += ' where categoryId=? and pubDate between date_sub(now(), interval 1 month) and now()';
+        values = [categoryId];
+    } else if (categoryId) {
+        sql += ' where categoryId=?';
+        values = [categoryId];
     } else if (news) {
-        sql += ' where pub_date between date_sub(now(), interval 1 month) and now()';
+        sql += ' where pubDate between date_sub(now(), interval 1 month) and now()';
     }
 
     sql += ' limit ? offset ?';
@@ -74,15 +74,15 @@ const bookDetail = (req, res) => {
             'message': '잘못된 토큰입니다.'
         });
     } else if (authorization instanceof ReferenceError) {
-        let book_id = req.params.id;
+        let bookId = req.params.id;
 
         let sql =
             `select *,
-            (select count(*) from likes where liked_book_id=books.id) as likes
+            (select count(*) from likes where likedBookId=books.id) as likes
             from books left join category
-            on books.category_id = category.category_id
+            on books.categoryId = category.categoryId
             where books.id = ?;`;
-        let values = [book_id];
+        let values = [bookId];
 
         conn.query(sql, values, (err, results) => {
             if (err) {
@@ -99,16 +99,16 @@ const bookDetail = (req, res) => {
 
     } else {
 
-        let book_id = req.params.id;
+        let bookId = req.params.id;
 
         let sql =
             `select *,
-            (select count(*) from likes where liked_book_id=books.id) as likes,
-            (select exists (select * from likes where user_id = ? and liked_book_id = ?)) as liked 
+            (select count(*) from likes where likedBookId=books.id) as likes,
+            (select exists (select * from likes where userId = ? and likedBookId = ?)) as liked 
             from books left join category
-            on books.category_id = category.category_id
+            on books.categoryId = category.categoryId
             where books.id = ?;`;
-        let values = [authorization.id, book_id, book_id];
+        let values = [authorization.id, bookId, bookId];
         conn.query(sql, values, (err, results) => {
             if (err) {
                 console.log(err);

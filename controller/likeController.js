@@ -5,7 +5,7 @@ const { StatusCodes } = require('http-status-codes'); // status code 모듈
 
 const addLike = (req, res) => {
 
-    const book_id = req.params.id;
+    const bookId = req.params.id;
 
     let authorization = ensureAuthorization(req, res);
 
@@ -18,8 +18,8 @@ const addLike = (req, res) => {
             'message': '잘못된 토큰입니다.'
         });
     } else {
-        let sql = 'insert into likes (user_id, liked_book_id) values (?, ?)';
-        let values = [authorization.id, book_id];
+        let sql = 'insert into likes (userId, likedBookId) values (?, ?)';
+        let values = [authorization.id, bookId];
         conn.query(sql, values, (err, results) => {
             if (err) {
                 console.log(err);
@@ -33,7 +33,7 @@ const addLike = (req, res) => {
 
 const removeLike = (req, res) => {
 
-    const book_id = req.params.id;
+    const bookId = req.params.id;
 
     let authorization = ensureAuthorization(req, res);
 
@@ -46,8 +46,8 @@ const removeLike = (req, res) => {
             'message': '잘못된 토큰입니다.'
         });
     } else {
-        let sql = 'DELETE FROM likes WHERE user_id = ? AND liked_book_id = ?';
-        let values = [authorization.id, book_id];
+        let sql = 'DELETE FROM likes WHERE userId = ? AND likedBookId = ?';
+        let values = [authorization.id, bookId];
         conn.query(sql, values, (err, results) => {
             if (err) {
                 console.log(err);

@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const addToCart = (req, res) => {
 
-    const { book_id, quantity } = req.body;
+    const { bookId, quantity } = req.body;
 
     let authorization = ensureAuthorization(req, res);
 
@@ -18,8 +18,8 @@ const addToCart = (req, res) => {
             'message': '잘못된 토큰입니다.'
         });
     } else {
-        let sql = 'insert into cartItems (book_id, quantity, user_id) values (?, ?, ?)';
-        let values = [book_id, quantity, authorization.id];
+        let sql = 'insert into cartItems (bookId, quantity, userId) values (?, ?, ?)';
+        let values = [bookId, quantity, authorization.id];
         conn.query(sql, values, (err, results) => {
             if (err) {
                 console.log(err);
@@ -45,10 +45,10 @@ const getCartItems = (req, res) => {
             'message': '잘못된 토큰입니다.'
         });
     } else {
-        let sql = `select cartItems.id, book_id, title, summary, quantity, price
+        let sql = `select cartItems.id, bookId, title, summary, quantity, price
      from cartItems left join books
-     on cartItems.book_id = books.id
-     where user_id = ?`;
+     on cartItems.bookId = books.id
+     where userId = ?`;
         let values = [authorization.id];
 
         if (selected) { // 주문서 작성 시 '선택한 장바구니 목록 조회'
