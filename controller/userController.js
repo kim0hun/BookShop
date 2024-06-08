@@ -1,101 +1,114 @@
-const conn = require('../mariadb'); // db 모듈
+const { query } = require('../mariadb');
 const { StatusCodes } = require('http-status-codes'); // status code 모듈
 const jwt = require('jsonwebtoken'); // jwt 모듈
 const crypto = require('crypto'); // crypto 모듈 : 암호화
 const dotenv = require('dotenv'); // dotenv 모듈
 dotenv.config();
 
-const join = (req, res) => {
+const join = async (req, res) => {
     const { email, password } = req.body;
 
+    // 로직
     const salt = crypto.randomBytes(10).toString('base64');
     const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64');
+
 
     let sql = 'insert into users (email, password, salt) values (?, ?, ?)';
     let values = [email, hashPassword, salt];
-    conn.query(sql, values, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        return res.status(StatusCodes.CREATED).json(results);
-    });
+
+    let results = await query(sql, values);
+
+
+    if (results instanceof Error) {
+        return res.status(StatusCodes.BAD_REQUEST).json(results);
+    } else {
+        return res.status(StatusCodes.OK).json(results)
+    }
+
 };
 
-const login = (req, res) => {
+const login = async (req, res) => {
     const { email, password } = req.body;
 
+
     let sql = 'select * from users where email = ?';
-    conn.query(sql, email, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
 
-        const loginUser = results[0];
+    let results = await query(sql, email);
 
-        const hashPassword = crypto.pbkdf2Sync(password, loginUser.salt, 10000, 10, 'sha512').toString('base64');
+    if (results instanceof Error) {
+        return res.status(StatusCodes.BAD_REQUEST).json(results);
+    }
 
-        if (loginUser && loginUser.password == hashPassword) {
-            const token = jwt.sign({
-                id : loginUser.id,
-                email: loginUser.email
-            }, process.env.PRIVATE_KEY, {
-                expiresIn: '10m',
-                issuer: 'hoon'
-            });
+    // 로직
+    const loginUser = results[0];
 
-            res.cookie('token', token, {
-                httpOnly: true
-            });
-            console.log(token);
+    const hashPassword = crypto.pbkdf2Sync(password, loginUser.salt, 10000, 10, 'sha512').toString('base64');
 
-            return res.status(StatusCodes.OK).json(results);
-        } else {
-            return res.status(StatusCodes.UNAUTHORIZED).end();
-        }
-    });
+    if (loginUser && loginUser.password == hashPassword) {
+        const token = jwt.sign({
+            id: loginUser.id,
+            email: loginUser.email
+        }, process.env.PRIVATE_KEY, {
+            expiresIn: '10m',
+            issuer: 'hoon'
+        });
+
+        res.cookie('token', token, {
+            httpOnly: true
+        });
+
+
+        return res.status(StatusCodes.OK).json(results);
+    } else {
+        return res.status(StatusCodes.UNAUTHORIZED).end();
+    }
+
 };
 
-const passwordResetRequest = (req, res) => {
+const passwordResetRequest = async (req, res) => {
     const { email } = req.body;
 
+
     let sql = 'select * from users where email = ?';
-    conn.query(sql, email, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        const user = results[0];
-        if (user) {
-            return res.status(StatusCodes.OK).json({
-                email: email
-            });
-        } else {
-            return res.status(StatusCodes.UNAUTHORIZED).end();
-        }
-    });
+
+    let results = await query(sql, email);
+
+    if (results instanceof Error) {
+        return res.status(StatusCodes.BAD_REQUEST).json(results);
+    }
+
+
+    const user = results[0];
+    if (user) {
+        return res.status(StatusCodes.OK).json({
+            email: email
+        });
+    } else {
+        return res.status(StatusCodes.UNAUTHORIZED).end();
+    }
 };
 
-const passwordReset = (req, res) => {
+const passwordReset = async (req, res) => {
     const { email, password } = req.body;
 
+    // 로직
     const salt = crypto.randomBytes(10).toString('base64');
     const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64');
 
+
     let sql = 'update users set password = ?, salt = ? where email = ?';
     let values = [hashPassword, salt, email];
-    conn.query(sql, values, (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        if (results.affectedRows == 0) {
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        } else {
-            return res.status(StatusCodes.OK).json(results);
-        }
-    });
+
+    let results = await query(sql, values);
+
+
+    if (results instanceof Error) {
+        return res.status(StatusCodes.BAD_REQUEST).json(results);
+    } else if (results.affectedRows == 0) {
+        return res.status(StatusCodes.BAD_REQUEST).end();
+    } else {
+        return res.status(StatusCodes.OK).json(results);
+    }
 };
 
 module.exports = {

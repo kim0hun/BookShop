@@ -4,7 +4,9 @@ const app = express();
 const dotenv = require('dotenv');
 dotenv.config();
 
-app.listen(process.env.PORT);
+app.listen(process.env.PORT, ()=>{
+    console.log(`${process.env.PORT}포트 대기중`);
+});
 
 const userRouter = require('./routes/users');
 const bookRouter = require('./routes/books');
