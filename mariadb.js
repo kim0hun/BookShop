@@ -36,4 +36,4 @@ const query = async function(sql, values = undefined) {
     }
 };
 
-module.exports = {query};
+module.exports = query;

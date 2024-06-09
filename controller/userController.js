@@ -1,9 +1,9 @@
-const { query } = require('../mariadb');
-const { StatusCodes } = require('http-status-codes'); // status code 모듈
-const jwt = require('jsonwebtoken'); // jwt 모듈
+const jwt = require('jsonwebtoken');
+const { StatusCodes } = require('http-status-codes');
 const crypto = require('crypto'); // crypto 모듈 : 암호화
 const dotenv = require('dotenv'); // dotenv 모듈
 dotenv.config();
+const query = require('../mariadb');
 
 const join = async (req, res) => {
     const { email, password } = req.body;
@@ -17,13 +17,11 @@ const join = async (req, res) => {
     let values = [email, hashPassword, salt];
 
     let results = await query(sql, values);
-
-
     if (results instanceof Error) {
         return res.status(StatusCodes.BAD_REQUEST).json(results);
-    } else {
-        return res.status(StatusCodes.OK).json(results)
     }
+
+    return res.status(StatusCodes.OK).json(results);
 
 };
 
@@ -34,7 +32,6 @@ const login = async (req, res) => {
     let sql = 'select * from users where email = ?';
 
     let results = await query(sql, email);
-
     if (results instanceof Error) {
         return res.status(StatusCodes.BAD_REQUEST).json(results);
     }
@@ -44,25 +41,23 @@ const login = async (req, res) => {
 
     const hashPassword = crypto.pbkdf2Sync(password, loginUser.salt, 10000, 10, 'sha512').toString('base64');
 
-    if (loginUser && loginUser.password == hashPassword) {
-        const token = jwt.sign({
-            id: loginUser.id,
-            email: loginUser.email
-        }, process.env.PRIVATE_KEY, {
-            expiresIn: '10m',
-            issuer: 'hoon'
-        });
-
-        res.cookie('token', token, {
-            httpOnly: true
-        });
-
-
-        return res.status(StatusCodes.OK).json(results);
-    } else {
+    if (!(loginUser && loginUser.password == hashPassword)) {
         return res.status(StatusCodes.UNAUTHORIZED).end();
     }
 
+    const token = jwt.sign({
+        id: loginUser.id,
+        email: loginUser.email
+    }, process.env.PRIVATE_KEY, {
+        expiresIn: '10m',
+        issuer: 'hoon'
+    });
+
+    res.cookie('token', token, {
+        httpOnly: true
+    });
+
+    return res.status(StatusCodes.OK).json(results);
 };
 
 const passwordResetRequest = async (req, res) => {
@@ -72,20 +67,19 @@ const passwordResetRequest = async (req, res) => {
     let sql = 'select * from users where email = ?';
 
     let results = await query(sql, email);
-
     if (results instanceof Error) {
         return res.status(StatusCodes.BAD_REQUEST).json(results);
     }
 
 
     const user = results[0];
-    if (user) {
-        return res.status(StatusCodes.OK).json({
-            email: email
-        });
-    } else {
+    if (!user) {
         return res.status(StatusCodes.UNAUTHORIZED).end();
     }
+
+    return res.status(StatusCodes.OK).json({
+        email: email
+    });
 };
 
 const passwordReset = async (req, res) => {
@@ -100,15 +94,15 @@ const passwordReset = async (req, res) => {
     let values = [hashPassword, salt, email];
 
     let results = await query(sql, values);
-
-
     if (results instanceof Error) {
         return res.status(StatusCodes.BAD_REQUEST).json(results);
-    } else if (results.affectedRows == 0) {
-        return res.status(StatusCodes.BAD_REQUEST).end();
-    } else {
-        return res.status(StatusCodes.OK).json(results);
     }
+
+    if (results.affectedRows == 0) {
+        return res.status(StatusCodes.BAD_REQUEST).end();
+    }
+
+    return res.status(StatusCodes.OK).json(results);
 };
 
 module.exports = {
