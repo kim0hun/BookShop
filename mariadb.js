@@ -1,14 +1,5 @@
 const mariadb = require('mysql2/promise');
 
-// const connection = mariadb.createConnection({
-//     host: '127.0.0.1',
-//     user: 'root',
-//     password: 'root',
-//     database: 'Bookshop'
-// });
-
-// module.exports = connection;
-
 const db = {
     host: '127.0.0.1',
     user: 'root',
@@ -16,20 +7,21 @@ const db = {
     database: 'Bookshop'
 };
 
-const query = async function(sql, values = undefined) {
+const query = async function (sql, values = undefined) {
     const conn = await mariadb.createConnection(db);
     let rows, fields;
 
-    try{
+    try {
 
-        if(values){
-            [rows, fields] = await conn.query(sql, values);
-        }else{
+        if (!values) {
             [rows, fields] = await conn.query(sql);
+        } else {
+            [rows, fields] = await conn.query(sql, values);
         }
+
         return rows;
 
-    } catch (error){
+    } catch (error) {
 
         return error;
     

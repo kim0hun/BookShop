@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { StatusCodes } = require('http-status-codes');
-const ensureAuthorization = require('../auth');
+const {verifyLoginAuth, checkLoginJwtError} = require('../auth');
 const query = require('../mariadb');
 
 const allBooks = async (req, res) => {
@@ -56,19 +56,10 @@ const allBooks = async (req, res) => {
 };
 
 const bookDetail = async (req, res) => {
-    
-    let authorization = await ensureAuthorization(req, res);
-
-    if (authorization instanceof jwt.TokenExpiredError) {
-        return res.status(StatusCodes.UNAUTHORIZED).json({
-            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
-        });
-    }
-    
-    if (authorization instanceof jwt.JsonWebTokenError) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-            'message': '잘못된 토큰입니다.'
-        });
+    let authorization = await verifyLoginAuth(req, res);
+    let errorResponse = await checkLoginJwtError(authorization, res);
+    if(errorResponse){
+        return errorResponse;
     }
     
     let bookId = req.params.id;

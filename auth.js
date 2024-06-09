@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
+const { StatusCodes } = require('http-status-codes');
 const dotenv = require('dotenv');
 dotenv.config();
 
 
-const ensureAuthorization = (req, res) => {
+const verifyLoginAuth = (req, res) => {
     try {
         let receivedJwt = req.headers['authorization'];
         // console.log('received jwt : ', receivedJwt);
@@ -24,6 +25,25 @@ const ensureAuthorization = (req, res) => {
 
         return err;
     }
-}
+};
 
-module.exports = ensureAuthorization;
+const checkLoginJwtError = (auth, res) => {
+    if (auth instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            'message': '로그인 세션이 만료되었습니다. 다시 로그인하세요.'
+        });
+    }
+
+    if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            'message': '잘못된 토큰입니다.'
+        });
+    }
+
+    return null;
+};
+
+module.exports = {
+    verifyLoginAuth,
+    checkLoginJwtError
+};
