@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const { StatusCodes } = require('http-status-codes');
 const {verifyLoginAuth, checkLoginJwtError} = require('../auth');
 const query = require('../mariadb');

@@ -1,5 +1,7 @@
 const query = require('../mariadb');
 
-const insertUser = ()=>{
-
+const insertUser = (vlaues)=>{
+    let sql = '';
+    let values = '';
+    query(sql, values);
 };

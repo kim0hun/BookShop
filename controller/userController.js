@@ -57,7 +57,7 @@ const login = async (req, res) => {
         httpOnly: true
     });
 
-    return res.status(StatusCodes.OK).json(results);
+    return res.status(StatusCodes.OK).json({ ...results[0], token: token});
 };
 
 const passwordResetRequest = async (req, res) => {

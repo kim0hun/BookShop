@@ -3,7 +3,7 @@ const mariadb = require('mysql2/promise');
 const db = {
     host: '127.0.0.1',
     user: 'root',
-    password: 'root',
+    password: 'mysql',
     database: 'Bookshop'
 };
 

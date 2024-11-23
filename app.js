@@ -1,8 +1,16 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 
 const dotenv = require('dotenv');
 dotenv.config();
+
+const corsOptions = {
+    origin: 'http://localhost:3001',
+    credential: true,
+};
+
+app.use(cors(corsOptions));
 
 app.listen(process.env.PORT, ()=>{
     console.log(`${process.env.PORT}포트 대기중`);
